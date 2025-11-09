@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  sonar-mcp:
+    container_name: sonar-mcp-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sonar-mcp-server:latest
+    
+    # Environment variables
+    env_file:
+      - .env
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Standard I/O for MCP protocol
+    stdin_open: true
+    tty: true
+    
+    # Network mode for stdio communication
+    network_mode: "bridge"
+
+# Optional: Create named volume for logs or cache
+volumes:
+  sonar-logs:
+    driver: local

@@ -1,0 +1,13 @@
+# Sonar Pro Search MCP Server - Python Dependencies
+
+# MCP SDK
+mcp>=1.2.0
+
+# HTTP client with async support
+httpx>=0.28.0
+
+# Data validation and settings management
+pydantic>=2.10.0
+
+# Type checking support
+typing-extensions>=4.12.0

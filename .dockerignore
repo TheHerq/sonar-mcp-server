@@ -1,0 +1,80 @@
+# Sonar Pro Search MCP Server - Docker Ignore File
+# Prevents unnecessary files from being copied to Docker image
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+LICENSE
+docs/
+
+# Environment and configuration
+.env
+.env.*
+!.env.example
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Logs
+*.log
+logs/
+
+# Scripts
+*.sh
+!sonar_docker.sh
+
+# Temporary files
+*.tmp
+*.bak
+*.old
+temp/
+tmp/
