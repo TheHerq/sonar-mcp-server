@@ -11,3 +11,6 @@ pydantic>=2.10.0
 
 # Type checking support
 typing-extensions>=4.12.0
+
+# ASGI server for SSE endpoint
+uvicorn>=0.32.0

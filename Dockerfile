@@ -1,5 +1,6 @@
 # Sonar Pro Search MCP Server - Dockerfile
 # Production-ready Docker image for Perplexity Sonar integration
+# Remote MCP Server with SSE (Server-Sent Events) support
 
 FROM python:3.11-slim
 
@@ -28,9 +29,12 @@ RUN useradd -m -u 1000 mcp && \
 
 USER mcp
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)"
+# Expose SSE port
+EXPOSE 8081
 
-# Run the MCP server
+# Health check - verify HTTP endpoint is responding
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8081/ || exit 1
+
+# Run the MCP server with SSE endpoint
 CMD ["python", "sonar_mcp_server.py"]

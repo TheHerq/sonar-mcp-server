@@ -7,11 +7,18 @@ services:
       context: .
       dockerfile: Dockerfile
     image: sonar-mcp-server:latest
-    
+
+    # Port mapping for SSE endpoint
+    ports:
+      - "8081:8081"
+
     # Environment variables
     env_file:
       - .env
-    
+    environment:
+      - PORT=8081
+      - HOST=0.0.0.0
+
     # Resource limits
     deploy:
       resources:
@@ -21,30 +28,26 @@ services:
         reservations:
           cpus: '0.5'
           memory: 256M
-    
+
     # Restart policy
     restart: unless-stopped
-    
+
     # Logging
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-    
-    # Health check
+
+    # Health check - verify HTTP endpoint
     healthcheck:
-      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-    
-    # Standard I/O for MCP protocol
-    stdin_open: true
-    tty: true
-    
-    # Network mode for stdio communication
+
+    # Network mode for HTTP communication
     network_mode: "bridge"
 
 # Optional: Create named volume for logs or cache

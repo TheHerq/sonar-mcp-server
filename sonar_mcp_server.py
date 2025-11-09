@@ -20,6 +20,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import httpx
+import uvicorn
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
@@ -874,5 +875,20 @@ async def sonar_reason(params: SonarReasonInput) -> str:
 # =============================================================================
 
 if __name__ == "__main__":
-    # Run the MCP server
-    mcp.run()
+    # Run the MCP server with SSE (Server-Sent Events) endpoint
+    # This enables Remote MCP support for Claude Desktop and other clients
+
+    # Port configuration
+    port = int(os.getenv("PORT", "8081"))
+    host = os.getenv("HOST", "0.0.0.0")
+
+    print(f"🚀 Starting Sonar MCP Server with SSE on {host}:{port}")
+    print(f"📡 SSE endpoint: http://{host}:{port}/sse")
+    print(f"🔗 Remote MCP URL: http://{host}:{port}/sse")
+
+    uvicorn.run(
+        mcp.sse_app(),
+        host=host,
+        port=port,
+        log_level="info"
+    )
