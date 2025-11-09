@@ -28,37 +28,27 @@ Claude Code CLI (Sonnet 4.5)
 - ✅ Cursor pomyślnie łączy się i używa narzędzi Sonar
 - ✅ Testowano użycie narzędzia `sonar_search` - działa
 
-### 5. Rozpoczęto konfigurację Cloudflare Access
-- ⚠️ Utworzono Access Application "Sonar MCP Server"
-- ⚠️ Skonfigurowano One-time PIN authentication
-- ❌ **PROBLEM**: Cloudflare Access nie działa - Cursor łączy się BEZ autoryzacji
+### 5. Skonfigurowano Cloudflare Access
+
+- ✅ Utworzono Access Application "Sonar MCP Server"
+- ✅ Skonfigurowano One-time PIN authentication przez email
+- ✅ Endpoint zabezpieczony - wymaga kodu weryfikacyjnego z emaila
+- ✅ Nieautoryzowany dostęp do <https://sonar.agentlab.work/sse> jest blokowany
 
 ## 🔴 Co pozostaje do zrobienia
 
-### Priorytet 1: Zabezpieczenie dostępu (KRYTYCZNE)
-**Problem**: Endpoint https://sonar.agentlab.work/sse jest publicznie dostępny bez autoryzacji. Każdy kto zna URL może używać serwera i zużywać tokeny OpenRouter.
+### Priorytet 1: Dokumentacja i commit na branch remote-sse
 
-**Rozwiązanie do wdrożenia**:
-1. **Skonfigurować Cloudflare Access Service Token**:
-   - W Cloudflare Zero Trust → Access → Service Auth → Create Service Token
-   - Dodać token jako nagłówek HTTP w konfiguracji MCP Cursor
-   - Zaktualizować Access Policy, aby wymagała Service Token
-
-2. **Alternatywnie - użyć API Key w nagłówku**:
-   - Dodać middleware do sonar_mcp_server.py sprawdzający nagłówek `X-API-Key`
-   - Przechowywać API Key w zmiennej środowiskowej
-   - Konfiguracja Cursor z custom headers
-
-### Priorytet 2: Finalizacja Cloudflare Access
-- Zdecydować: Service Token czy One-time PIN
-- Przetestować autoryzację przez przeglądarkę (jeśli OTP)
-- Przetestować Cursor z nową konfiguracją autoryzacji
-- Zweryfikować że nieautoryzowane requesty są blokowane
-
-### Priorytet 3: Commit zmian na branch remote-sse
 - Zacommitować zaktualizowany docker-compose.yml (z cloudflared)
 - Pushować do GitHub remote-sse branch
-- Zaktualizować dokumentację REMOTE_MCP_SETUP.md o Cloudflare Access
+- Zaktualizować dokumentację REMOTE_MCP_SETUP.md o sekcję Cloudflare Access
+- Dodać instrukcje autoryzacji przez email do dokumentacji
+
+### Priorytet 2: Integracja Cursor z autoryzacją
+
+- Przetestować jak Cursor obsługuje autoryzację przez Cloudflare Access
+- Jeśli Cursor nie obsługuje browser-based auth, rozważyć Service Token jako alternatywę
+- Udokumentować proces autoryzacji dla różnych klientów MCP
 
 ## 🔑 Kluczowe informacje techniczne
 
@@ -180,24 +170,19 @@ Lokalizacja: Settings → Features → MCP
 
 ## 🐛 Znane problemy
 
-### 1. Brak autoryzacji (KRYTYCZNY)
-**Status**: Nierozwiązany
-**Opis**: Endpoint SSE jest publicznie dostępny. Cloudflare Access skonfigurowany ale nie działa.
-**Impact**: Każdy może używać serwera i zużywać tokeny OpenRouter API
-**Next step**: Wdrożyć Service Token lub middleware z API Key
-
-### 2. Cloudflare Access One-time PIN nie działa z Cursor
-**Status**: Potwierdzony
-**Opis**: Cursor (API client) nie może przeprowadzić browser-based authentication flow
-**Rozwiązanie**: Użyć Service Token zamiast OTP
+### 1. Integracja Cursor z Cloudflare Access One-time PIN
+**Status**: Do przetestowania
+**Opis**: Cursor (API client) może mieć trudności z browser-based authentication flow
+**Alternatywa**: Service Token dla API-based authentication jeśli potrzebne
 
 ## 💡 Ważne decyzje architektoniczne
 
 1. **Cloudflare Tunnel zamiast Firewall**: Zero-config, maximum security, nie trzeba otwierać portów VPS
-2. **Dwa Git branches**: Separacja local (stdio) vs remote (SSE) deployment
-3. **Docker Compose bez network_mode**: Domyślna sieć Docker pozwala na komunikację między kontenerami
-4. **Uvicorn na porcie 8081**: Standardowy port dla MCP, nie koliduje z innymi usługami
-5. **Cloudflare jako Registrar**: Integracja domeny z Cloudflare Zero Trust
+2. **Cloudflare Access z One-time PIN**: Autoryzacja przez email dla zabezpieczenia endpointu SSE
+3. **Dwa Git branches**: Separacja local (stdio) vs remote (SSE) deployment
+4. **Docker Compose bez network_mode**: Domyślna sieć Docker pozwala na komunikację między kontenerami
+5. **Uvicorn na porcie 8081**: Standardowy port dla MCP, nie koliduje z innymi usługami
+6. **Cloudflare jako Registrar**: Integracja domeny z Cloudflare Zero Trust
 
 ## 🔍 Testowanie
 
@@ -206,14 +191,11 @@ Lokalizacja: Settings → Features → MCP
 curl -i -m 5 https://sonar.agentlab.work/sse
 ```
 
-**Oczekiwany wynik** (bez autoryzacji):
-```
-HTTP/2 200
-content-type: text/event-stream; charset=utf-8
+**Oczekiwany wynik** (z aktywnym Cloudflare Access):
 
-event: endpoint
-data: /messages/?session_id=...
-```
+- Nieautoryzowane żądania są przekierowywane do strony autoryzacji Cloudflare
+- Wymagany jest kod weryfikacyjny wysłany na email
+- Po autoryzacji: HTTP/2 200 z SSE streamem
 
 ### Test z VPS (SSH):
 ```bash
@@ -271,11 +253,11 @@ User preferuje:
 - Bezpieczeństwo: autoryzacja dostępu do API
 
 Następny agent powinien:
-1. **PRZEDE WSZYSTKIM**: Zabezpieczyć endpoint SSE autoryzacją
-2. Przetestować czy nieautoryzowane requesty są blokowane
-3. Zweryfikować że Cursor działa z autoryzacją
-4. Zacommitować finalne zmiany na branch remote-sse
-5. Zaktualizować REMOTE_MCP_SETUP.md o sekcję Security
+
+1. Przetestować integrację Cursor z Cloudflare Access (autoryzacja przez email)
+2. Jeśli potrzebne, skonfigurować Service Token dla API clients
+3. Zacommitować finalne zmiany na branch remote-sse
+4. Zaktualizować REMOTE_MCP_SETUP.md o sekcję Cloudflare Access i autoryzacji
 
 ---
 
