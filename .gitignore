@@ -2,6 +2,19 @@
 
 # Environment variables (contains API keys!)
 .env
+.env.*
+*.env
+
+# Sensitive configuration files
+claude_desktop_config.json
+*_config.json
+config.local.json
+*.secret
+*.secrets
+
+# Deployment scripts (may contain credentials)
+deploy*.sh
+deploy-*.sh
 
 # Python
 __pycache__/
